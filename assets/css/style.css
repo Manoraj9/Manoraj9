@@ -1,0 +1,15 @@
+    html, body {
+      height: 100%;
+        }
+    body {
+      background: linear-gradient(140deg, rgb(189, 227, 236), rgb(54, 54, 84));
+        }
+    .card-body {
+      padding-left: 30px;
+      padding-top: 3px; 
+        }
+    .img {
+      width: 35px;
+      border-radius: 50%; 
+      margin-right: 10px;
+        }
