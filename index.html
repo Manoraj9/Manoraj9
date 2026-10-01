@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030303">
+<title>October</title>
+<link rel="icon" href="assets/05.png" type="image/png">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="scene">
+
+  <img class="flower f1" src="assets/01.png" alt="" draggable="false">
+  <img class="flower f2" src="assets/02.png" alt="" draggable="false">
+  <img class="flower f3" src="assets/03.png" alt="" draggable="false">
+  <img class="flower f4" src="assets/04.png" alt="" draggable="false">
+  <img class="flower f5" src="assets/05.png" alt="" draggable="false">
+  <img class="flower f6" src="assets/06.png" alt="" draggable="false">
+
+  <section class="center" id="reveal">
+    <div class="answer-row">
+      <span class="fixed">white</span>
+      <input id="answer" aria-label="complete the word" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="" />
+    </div>
+  </section>
+</div>
+
+<script>
+const scene = document.getElementById('scene');
+const flowers = [...document.querySelectorAll('.flower')];
+const reveal = document.getElementById('reveal');
+const answer = document.getElementById('answer');
+
+const accepted = new Set(['rose', 'roses', 'Rose', 'Roses']);
+let remaining = flowers.length;
+let resetTimer = null;
+
+/* Randomly scatter every flower across the whole frame.
+   Placement is based on each flower's real rendered size, so flowers are
+   deliberately kept from touching/overlapping one another. */
+function scatterFlowers() {
+  const placements = [];
+  const isMobile = window.innerWidth <= 600;
+  const padding = isMobile ? 10 : 22;
+  const gap = isMobile ? 18 : 28;
+
+  // Reset first so measurements are based on the current viewport.
+  flowers.forEach(flower => {
+    flower.classList.remove('gone');
+    flower.classList.add('visible');
+    flower.style.left = '0px';
+    flower.style.top = '0px';
+  });
+
+  // Give the browser a frame to apply responsive widths before measuring.
+  flowers.forEach(flower => {
+    const rotation = -16 + Math.random() * 32;
+    const scale = isMobile
+      ? 0.78 + Math.random() * 0.14
+      : 0.86 + Math.random() * 0.18;
+
+    flower.style.setProperty('--rot', `${rotation}deg`);
+    flower.style.transform = `rotate(${rotation}deg) scale(${scale})`;
+  });
+
+  const viewportW = window.innerWidth;
+  const viewportH = window.innerHeight;
+
+  // Use the transformed bounding box as a conservative collision box.
+  const sizes = flowers.map(flower => {
+    const rect = flower.getBoundingClientRect();
+    return {
+      width: rect.width,
+      height: rect.height
+    };
+  });
+
+  flowers.forEach((flower, index) => {
+    const size = sizes[index];
+    let chosen = null;
+
+    // Try many random candidates first. This keeps the composition organic.
+    for (let attempt = 0; attempt < 1200; attempt++) {
+      const x = padding + Math.random() * Math.max(1, viewportW - size.width - padding * 2);
+      const y = padding + Math.random() * Math.max(1, viewportH - size.height - padding * 2);
+
+      const overlaps = placements.some(p =>
+        x < p.x + p.width + gap &&
+        x + size.width + gap > p.x &&
+        y < p.y + p.height + gap &&
+        y + size.height + gap > p.y
+      );
+
+      if (!overlaps) {
+        chosen = {x, y, width:size.width, height:size.height};
+        break;
+      }
+    }
+
+    // If a very small viewport makes perfect packing difficult, use a
+    // deterministic grid fallback rather than allowing flowers to coincide.
+    if (!chosen) {
+      const cols = isMobile ? 2 : 3;
+      const rows = Math.ceil(flowers.length / cols);
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const cellW = viewportW / cols;
+      const cellH = viewportH / rows;
+      chosen = {
+        x: Math.max(padding, col * cellW + (cellW - size.width) / 2),
+        y: Math.max(padding, row * cellH + (cellH - size.height) / 2),
+        width:size.width,
+        height:size.height
+      };
+    }
+
+    placements.push(chosen);
+    flower.style.left = `${chosen.x}px`;
+    flower.style.top = `${chosen.y}px`;
+  });
+
+  remaining = flowers.length;
+}
+
+function showFlowersAgain() {
+  clearTimeout(resetTimer);
+
+  reveal.classList.remove('show');
+  answer.value = '';
+
+  // Give the entry screen time to fade away before the flowers return.
+  resetTimer = setTimeout(() => {
+    scatterFlowers();
+  }, 750);
+}
+
+function showEntry() {
+  setTimeout(() => {
+    reveal.classList.add('show');
+    setTimeout(() => answer.focus(), 1000);
+  }, 650);
+}
+
+flowers.forEach(flower => {
+  flower.addEventListener('click', () => {
+    if (flower.classList.contains('gone')) return;
+
+    flower.classList.add('gone');
+    remaining--;
+
+    if (remaining === 0) showEntry();
+  });
+});
+
+/* No button is needed anymore.
+   Press Enter after typing: correct answers reveal the destination;
+   incorrect answers return to the flower screen. */
+answer.addEventListener('keydown', event => {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+
+  const value = answer.value.trim();
+
+  if (accepted.has(value)) {
+    reveal.classList.remove('show');
+
+    setTimeout(() => {
+      // The only thing left on screen is the URL in the same visual style as "white".
+      scene.innerHTML = `
+        <a class="destination" href="https://whiterose.netlify.app">
+          whiterose.netlify.app
+        </a>
+      `;
+      scene.classList.add('destination-screen');
+    }, 850);
+  } else if (value.length > 0) {
+    showFlowersAgain();
+  }
+});
+
+// Optional: clicking away and returning to the field doesn't submit anything.
+// The deliberate Enter press is the submission action, so partially typed answers
+// are never treated as incorrect while the user is still typing.
+
+scatterFlowers();
+
+window.addEventListener('resize', () => {
+  // Re-scatter only while the flowers are the active screen.
+  if (remaining > 0) scatterFlowers();
+});
+</script>
+</body>
+</html>

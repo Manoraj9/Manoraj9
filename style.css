@@ -1,0 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Parisienne&display=swap');
+
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#020202;
+  color:#fff;
+}
+body{font-family:"Cormorant Garamond",serif}
+
+#scene{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+  background:#020202;
+}
+
+/* Six large flowers are positioned by JavaScript, so their arrangement changes
+   naturally every time the page is opened or reset. */
+.flower{
+  position:absolute;
+  width:clamp(155px,22vw,330px);
+  height:auto;
+  object-fit:contain;
+  cursor:pointer;
+  user-select:none;
+  -webkit-user-drag:none;
+  opacity:0;
+  transform-origin:center center;
+  filter:drop-shadow(0 0 18px rgba(150,190,255,.055));
+  transition:
+    opacity .8s ease,
+    transform .85s cubic-bezier(.2,.75,.2,1),
+    filter .5s ease;
+}
+
+.flower.visible{opacity:1}
+
+.flower:hover{
+  filter:drop-shadow(0 0 30px rgba(255,255,255,.16));
+  transform:rotate(var(--rot)) scale(1.045)!important;
+}
+
+.flower.gone{
+  opacity:0;
+  transform:scale(.12) rotate(28deg)!important;
+  pointer-events:none;
+}
+
+/* Entry screen: no text except the existing "white — input" arrangement. */
+.center{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  opacity:0;
+  visibility:hidden;
+  transition:opacity 1.25s ease,visibility 1.25s ease;
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,.065) 0%,
+      rgba(255,255,255,.025) 18%,
+      rgba(255,255,255,0) 48%);
+}
+
+.center.show{opacity:1;visibility:visible}
+
+.answer-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  font-family:Parisienne,cursive;
+  font-size:clamp(70px,11vw,145px);
+  font-weight:400;
+  line-height:.85;
+  color:#fff;
+  text-shadow:0 0 35px rgba(255,255,255,.15);
+}
+
+.answer-row .fixed{color:#fff}
+
+#answer{
+  width:min(300px,34vw);
+  border:0;
+  border-bottom:1px solid rgba(255,255,255,.42);
+  outline:0;
+  background:transparent;
+  color:#fff;
+  font-family:Parisienne,cursive;
+  font-size:inherit;
+  font-weight:400;
+  line-height:.85;
+  padding:0 3px 8px;
+  text-align:left;
+  caret-color:#fff;
+  text-shadow:0 0 35px rgba(255,255,255,.15);
+}
+
+#answer::selection{background:rgba(255,255,255,.2)}
+#answer::placeholder{color:transparent}
+
+/* Correct-answer destination: same font, same white, centered. */
+.destination-screen{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,.065) 0%,
+      rgba(255,255,255,.025) 18%,
+      rgba(255,255,255,0) 48%);
+}
+
+.destination{
+  color:#fff;
+  text-decoration:none;
+  font-family:Parisienne,cursive;
+  font-size:clamp(50px,8vw,105px);
+  font-weight:400;
+  line-height:.85;
+  text-shadow:0 0 35px rgba(255,255,255,.15);
+  animation:destinationIn 1.4s ease both;
+  transition:text-shadow .4s ease,transform .4s ease;
+}
+
+.destination:hover{
+  color:#fff;
+  text-shadow:0 0 42px rgba(255,255,255,.45);
+  transform:scale(1.025);
+}
+
+@keyframes destinationIn{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+@media(max-width:600px){
+  .flower{width:clamp(125px,40vw,220px)}
+  .answer-row{gap:8px;font-size:clamp(58px,15vw,92px)}
+  #answer{width:38vw}
+  .destination{font-size:clamp(38px,9vw,70px)}
+}
